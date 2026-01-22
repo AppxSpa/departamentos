@@ -1,3 +1,5 @@
+sudo docker pull mirkogutierrezappx/departamentos:latest
+
 sudo docker stop departamentos-container 2>/dev/null
 sudo docker rm departamentos-container 2>/dev/null
 
@@ -9,4 +11,6 @@ sudo docker run \
            --env-file .env \
            --network appx \
            --add-host=host.docker.internal:host-gateway \
-           --name departamentos-container departamentos
+           --name departamentos-container departamentos \
+           mirkogutierrezappx/agendalc:latest
+
