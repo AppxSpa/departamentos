@@ -12,5 +12,5 @@ sudo docker run \
            --network appx \
            --add-host=host.docker.internal:host-gateway \
            --name departamentos-container departamentos \
-           mirkogutierrezappx/agendalc:latest
+           mirkogutierrezappx/departamentos:latest
 
