@@ -1,16 +1,47 @@
-sudo docker pull mirkogutierrezappx/departamentos:latest
+#!/bin/bash
 
-sudo docker stop departamentos-container 2>/dev/null
-sudo docker rm departamentos-container 2>/dev/null
+# =========================================================
+# CONFIGURACIÓN DEL MICROSERVICIO (Actualizado a GHCR)
+# =========================================================
+NOMBRE_APP="departamentos"
+PUERTO="8088"
 
-sudo docker build -t departamentos .
+# CORRECCIÓN: Usar la organización AppxSpa en minúsculas
+IMAGEN_HUB="ghcr.io/appxspa/departamentos" 
+# =========================================================
 
-sudo docker run \
+OPCION=${1:-"dev"}
+
+case $OPCION in
+    "prod")
+        echo "--- MODO PRODUCCIÓN: Bajando de GHCR ($IMAGEN_HUB) ---"
+        docker pull $IMAGEN_HUB:latest
+        TARGET_IMAGE="$IMAGEN_HUB:latest"
+        ;;
+    *)
+        echo "--- MODO DESARROLLO: Compilando localmente ($NOMBRE_APP) ---"
+        # Asegúrate de tener permisos en mvnw
+        ./mvnw clean package -DskipTests
+        docker build -t $NOMBRE_APP:local .
+        TARGET_IMAGE="$NOMBRE_APP:local"
+        ;;
+esac
+
+echo "--- Limpiando contenedor anterior ---"
+docker stop ${NOMBRE_APP}-container 2>/dev/null
+docker rm ${NOMBRE_APP}-container 2>/dev/null
+
+echo "--- Iniciando contenedor en puerto $PUERTO ---"
+# OJO: Verifica si la red es 'laflorida' o 'appx'
+docker run \
            --restart always \
-           -d -p 8088:8088 \
+           -d \
+           -p ${PUERTO}:${PUERTO} \
            --env-file .env \
            --network appx \
            --add-host=host.docker.internal:host-gateway \
-           --name departamentos-container departamentos \
-           mirkogutierrezappx/departamentos:latest
+           --name ${NOMBRE_APP}-container \
+           $TARGET_IMAGE
 
+docker image prune -f
+echo "--- Proceso Terminado ($OPCION) ---"
